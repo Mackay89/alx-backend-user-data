@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Module for personal data project
 """
+This Module is for personal data project
+"""
+
 
 import logging
 import os
 import mysql.connector
 import re
 from typing import List
+
 
 patterns = {
     'extract': lambda x, y: r'(?P<field>{})=[^{}]*'.format('|'.join(x), y),
@@ -46,11 +49,14 @@ class RedactingFormatter(logging.Formatter):
             record (logging.LogRecord): A logging.LogRecord instance.
 
         Returns:
-            str: A string with all occurrences of the `self.fields` in
-            `record.message` replaced by the `self.REDACTION` string.
+            str: A string with all occurrences of the self.fields in
+            record.message replaced by the self.REDACTION string.
         """
+        # Call the parent class's format method to get the formatted log line
         msg = super(RedactingFormatter, self).format(record)
-        return filter_datum(self.fields, self.REDACTION, msg, self.SEPARATOR)
+        # Use the filter_datum function to perform substitution of self.fields
+        text = filter_datum(self.fields, self.REDACTION, msg, self.SEPARATOR)
+        return text
 
 
 def filter_datum(
@@ -81,15 +87,27 @@ def get_logger() -> logging.Logger:
     level.
     It should not propagate messages to other loggers. It should have a
     StreamHandler with RedactingFormatter as formatter.
+    Create a tuple PII_FIELDS constant at the root of the module containing
+    the fields from user_data.csv that are considered PII. PII_FIELDS can
+    contain only 5 fields - choose the right list of fields that can are
+    considered as “important” PIIs or information that you must hide in your
+    logs. Use it to parameterize the formatter.
 
     Returns:
         logging.Logger: A logging.Logger instance.
     """
+    # Create a logger with the specified name
     logger = logging.getLogger("user_data")
+    # Set the logging level to only log messages up to logging.INFO
     logger.setLevel(logging.INFO)
+    # Create a StreamHandler to output log messages to the console
     stream_handler = logging.StreamHandler()
+    # Disable propagation of log messages to other loggers
     logger.propagate = False
+    # Create an instance of the RedactingFormatter class with the PII_FIELDS,
+    # as fields and set the formatter of the handler
     stream_handler.setFormatter(RedactingFormatter(PII_FIELDS))
+    # Add the handler to the logger
     logger.addHandler(stream_handler)
     return logger
 
@@ -98,18 +116,28 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
     """Returns a connector to the database
     (mysql.connector.connection.MySQLConnection object).
 
-    Connects to a secure database using credentials from environment variables.
+    You will connect to a secure holberton database to read a users table.
+    The database is protected by a username and password that are set as
+    environment variables on the server named PERSONAL_DATA_DB_USERNAME,
+    (set the default as “root”), PERSONAL_DATA_DB_PASSWORD (set the default
+    as an empty string) and PERSONAL_DATA_DB_HOST (set the default as
+    “localhost”).
+    The database name is stored in PERSONAL_DATA_DB_NAME.
 
     Returns:
         mysql.connector.connection.MySQLConnection: Connector to the
         database.
     """
+    # Get the environment variables for the database credentials
     db_host = os.getenv("PERSONAL_DATA_DB_HOST", "localhost")
+    #  OR db_name = os.environ.get('PERSONAL_DATA_DB_USERNAME', 'root')
     db_name = os.getenv("PERSONAL_DATA_DB_NAME", "")
     db_user = os.getenv("PERSONAL_DATA_DB_USERNAME", "root")
     db_pwd = os.getenv("PERSONAL_DATA_DB_PASSWORD", "")
+    # Connect to the database using the obtained credentials
     connection = mysql.connector.connect(
         host=db_host,
+        port=3306,
         user=db_user,
         password=db_pwd,
         database=db_name,
@@ -118,28 +146,35 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
 
 
 def main() -> None:
-    """Obtain a database connection using get_db and retrieve all rows in
+    """Obtains a database connection using get_db and retrieve all rows in
     the users table and display each row under a filtered format.
-    """
-    logger = get_logger()
 
+    Filtered fields:
+    1. name
+    2. email
+    3. phone
+    4. ssn
+    5. password
+
+    Only your main function should run when the module is executed.
+    """
+    # Obtain a logger and set the logging level
+    logger = get_logger()
+    logger.setLevel(logging.INFO)
+
+    # Obtain a database connection
     db = get_db()
     cursor = db.cursor()
 
     # Retrieve all rows in the users table
     cursor.execute("SELECT * FROM users")
-    columns = [desc[0] for desc in cursor.description]
     rows = cursor.fetchall()
 
     # Display each row under a filtered format
     for row in rows:
-        message = "; ".join([f"{columns[i]}={row[i]}"
-            for i in range(len(columns))])
+        message = "; ".join([f"{field}={row[field]}" for field in row.keys()])
         logger.info(filter_datum(PII_FIELDS, RedactingFormatter.REDACTION,
                                  message, RedactingFormatter.SEPARATOR))
-
-    cursor.close()
-    db.close()
 
 
 if __name__ == "__main__":
