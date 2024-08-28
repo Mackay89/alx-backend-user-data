@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""
+Main module that connects to the database and retrieves user data.
+"""
+
+import logging
+from typing import List
+from mysql.connector import connect, Error
+from filtered_logger import get_db, filter_datum, DATA_FIELDS
+
+
+def main() -> None:
+    """Main function that retrieves user data and logs it in a filtered format."""
+    try:
+        db = get_db()  # Get the database connection
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM users;")
+        
+        # Column names from the users table
+        columns = ["name", "email", "phone", "ssn", "password", "ip", "last_login", "user_agent"]
+
+        # Fetch all rows from the users table
+        for row in cursor.fetchall():
+            # Create a dictionary mapping column names to their corresponding values
+            user_data = {column: value for column, value in zip(columns, row)}
+            
+            # Filter the data for logging
+            filtered_data = "; ".join([
+                f"{field}={filter_datum(field, '***', user_data[field], DATA_FIELDS)}"
+                for field in columns
+            ])
+            
+            # Log the filtered data
+            logging.info(f"[HOLBERTON] user_data INFO: {filtered_data}")
+
+    except Error as e:
+        logging.error(f"Error retrieving user data: {e}")
+    finally:
+        if db:
+            db.close()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main()
+
