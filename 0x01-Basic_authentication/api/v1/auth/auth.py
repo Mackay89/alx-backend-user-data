@@ -50,7 +50,8 @@ class Auth:
         """Gets the value of the Authorization header from the request.
 
         Args:
-            request (request, optional): Flask request object. Defaults to None.
+            request (request, optional): Flask request object.
+            Defaults to None.
 
         Returns:
             str: The value of the Authorization header or None if not present.
@@ -63,10 +64,10 @@ class Auth:
         """Placeholder for retrieving the current user based on the request.
 
         Args:
-            request (request, optional): Flask request object. Defaults to None.
+            request (request, optional): Flask request object.
+            Defaults to None.
 
         Returns:
             TypeVar('User'): The current user, or None if not implemented.
         """
         return None
-
