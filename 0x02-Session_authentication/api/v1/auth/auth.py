@@ -3,7 +3,7 @@
 Module for authentication
 """
 import os
-from typing import List, TypeVar
+from typing import List, Optional
 
 from flask import request
 
@@ -20,7 +20,8 @@ class Auth:
             excluded_paths (List[str]): The list of excluded paths.
 
         Returns:
-            bool: True if the path is not in the excluded paths list, False otherwise.
+            bool: True if the path is not in the excluded paths
+            list, False otherwise.
         """
         if not path:
             return True
@@ -32,7 +33,8 @@ class Auth:
 
         for excluded_path in excluded_paths:
             # Handle wildcard paths (e.g., '/api/v1/*')
-            if excluded_path.endswith('*') and path.startswith(excluded_path.rstrip('*')):
+            if (excluded_path.endswith('*') and
+                path.startswith(excluded_path[:-1])):
                 return False
             # Handle exact matches
             if path == excluded_path.rstrip('/'):
@@ -40,41 +42,45 @@ class Auth:
 
         return True
 
-    def authorization_header(self, request=None) -> str:
+    def authorization_header(self, request=None) -> Optional[str]:
         """
         Retrieves the Authorization header from a request.
 
         Args:
-            request (flask.Request, optional): The request object. Defaults to None.
+            request (Optional[flask.Request]): The request
+            object. Defaults to None.
 
         Returns:
-            str: The value of the Authorization header, or None if not present.
+            Optional[str]: The value of the Authorization header, or None if not present.
         """
         if request is None:
             return None
         return request.headers.get('Authorization')
 
-    def current_user(self, request=None) -> TypeVar('User'):
+    def current_user(self, request=None) -> Optional['User']:
         """
         Identifies the current user from the request.
 
         Args:
-            request (flask.Request, optional): The request object. Defaults to None.
+            request (Optional[flask.Request]): The request
+            object. Defaults to None.
 
         Returns:
-            TypeVar('User'): The current user. None for now, to be implemented later.
+            Optional[User]: The current user. None for now,
+            to be implemented later.
         """
         return None
 
-    def session_cookie(self, request=None) -> str:
+    def session_cookie(self, request=None) -> Optional[str]:
         """
         Retrieves the session cookie from a request.
 
         Args:
-            request (flask.Request, optional): The request object. Defaults to None.
+            request (Optional[flask.Request]): The request
+            object. Defaults to None.
 
         Returns:
-            str: The value of the session cookie, or None if not present.
+            Optional[str]: The value of the session cookie, or None if not present.
         """
         if request is None:
             return None

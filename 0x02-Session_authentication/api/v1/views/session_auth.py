@@ -17,7 +17,8 @@ def session_auth_login() -> Tuple[str, int]:
     Handles the user login and session creation.
 
     Returns:
-        - JSON representation of the authenticated User object with a status code.
+        Tuple[str, int]: JSON representation of the authenticated User
+        object with a status code.
     """
     # Get the email and password from the request form data
     email = request.form.get('email')
@@ -45,19 +46,25 @@ def session_auth_login() -> Tuple[str, int]:
     response = jsonify(user[0].to_json())
 
     # Set the session ID in the cookie
-    response.set_cookie(os.getenv("SESSION_NAME"), session_id)
+    response.set_cookie(
+        os.getenv("SESSION_NAME"),
+        session_id
+    )
 
     return response, 200
 
 
-@app_views.route('/auth_session/logout', methods=['DELETE'], strict_slashes=False)
+@app_views.route
+('/auth_session/logout', methods=['DELETE'], strict_slashes=False)
+
+
 def session_auth_logout() -> Tuple[str, int]:
     """DELETE /api/v1/auth_session/logout
 
     Handles the user logout and session destruction.
 
     Returns:
-        - An empty JSON object with a status code.
+        Tuple[str, int]: An empty JSON object with a status code.
     """
     # Destroy the session
     if not auth.destroy_session(request):

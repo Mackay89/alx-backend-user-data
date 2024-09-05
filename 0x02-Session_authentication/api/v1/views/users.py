@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Module of Users views
+"""Module of Users views.
 """
 from flask import abort, jsonify, request
 from api.v1.views import app_views
@@ -25,18 +25,18 @@ def view_one_user(user_id: str = None) -> str:
       - User object JSON represented
       - 404 if the User ID doesn't exist
     """
-    if not user_id:
+    if user_id is None:
         abort(404)
 
     if user_id == 'me':
-        if not request.current_user:
+        if request.current_user is None:
             abort(404)
         return jsonify(request.current_user.to_json())
 
     user = User.get(user_id)
-    if not user:
+    if user is None:
         abort(404)
-    
+
     return jsonify(user.to_json())
 
 
@@ -49,13 +49,13 @@ def delete_user(user_id: str = None) -> str:
       - empty JSON if the User has been correctly deleted
       - 404 if the User ID doesn't exist
     """
-    if not user_id:
+    if user_id is None:
         abort(404)
 
     user = User.get(user_id)
-    if not user:
+    if user is None:
         abort(404)
-    
+
     user.remove()
     return jsonify({}), 200
 
@@ -77,18 +77,17 @@ def create_user() -> str:
     except Exception:
         return jsonify({'error': "Wrong format"}), 400
 
-    if not rj.get("email"):
+    if rj.get("email", "") == "":
         return jsonify({'error': "email missing"}), 400
-    if not rj.get("password"):
+    if rj.get("password", "") == "":
         return jsonify({'error': "password missing"}), 400
 
     try:
-        user = User(
-            email=rj.get("email"),
-            password=rj.get("password"),
-            first_name=rj.get("first_name"),
-            last_name=rj.get("last_name")
-        )
+        user = User()
+        user.email = rj.get("email")
+        user.password = rj.get("password")
+        user.first_name = rj.get("first_name")
+        user.last_name = rj.get("last_name")
         user.save()
         return jsonify(user.to_json()), 201
     except Exception as e:
@@ -108,11 +107,11 @@ def update_user(user_id: str = None) -> str:
       - 404 if the User ID doesn't exist
       - 400 if can't update the User
     """
-    if not user_id:
+    if user_id is None:
         abort(404)
 
     user = User.get(user_id)
-    if not user:
+    if user is None:
         abort(404)
 
     try:
@@ -120,13 +119,10 @@ def update_user(user_id: str = None) -> str:
     except Exception:
         return jsonify({'error': "Wrong format"}), 400
 
-    if rj.get('first_name'):
+    if rj.get('first_name') is not None:
         user.first_name = rj.get('first_name')
-    if rj.get('last_name'):
+    if rj.get('last_name') is not None:
         user.last_name = rj.get('last_name')
 
-    try:
-        user.save()
-        return jsonify(user.to_json()), 200
-    except Exception as e:
-        return jsonify({'error': f"Can't update User: {e}"}), 400
+    user.save()
+    return jsonify(user.to_json()), 200
