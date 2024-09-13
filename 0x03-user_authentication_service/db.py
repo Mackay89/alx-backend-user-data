@@ -80,37 +80,11 @@ class DB:
             NoResultFound: If no user is found matching the criteria.
             InvalidRequestError: If the query is invalid.
         """
+        session = self._session
         try:
-            user = self._session.query(User).filter_by(**kwargs).one()
+            user = session.query(User).filter_by(**kwargs).one()
+            return user
         except NoResultFound:
-            raise NoResultFound()
+            raise NoResultFound("No user found matching the criteria.")
         except InvalidRequestError:
-            raise InvalidRequestError()
-        return user
-
-    def update_user(self, user_id: int, **kwargs: Dict[str, str]) -> None:
-        """Updates a user's attributes by their user ID.
-
-        Args:
-            user_id (int): The ID of the user to update.
-            **kwargs: Keyword arguments representing the user's attributes to
-            update.
-
-        Raises:
-            ValueError: If the user is not found or an invalid attribute is
-            provided.
-        """
-        try:
-            user = self.find_user_by(id=user_id)
-        except NoResultFound:
-            raise ValueError(f"User with id {user_id} not found")
-
-        for key, value in kwargs.items():
-            if not hasattr(user, key):
-                raise ValueError(f"User has no attribute {key}")
-            setattr(user, key, value)
-
-        try:
-            self._session.commit()
-        except InvalidRequestError:
-            raise ValueError("Invalid request to update user")
+            raise InvalidRequestError("Invalid query arguments provided.")
